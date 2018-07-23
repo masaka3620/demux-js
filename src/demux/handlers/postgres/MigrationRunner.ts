@@ -1,14 +1,14 @@
 import {IDatabase, ITask} from "pg-promise"
 import Migration from "./Migration"
 
-class MigrationRunner {
+export default class MigrationRunner {
   constructor(
     protected pgp: IDatabase<any>,
     protected migrations: Migration[],
     protected tableName: string = "_migrations",
     protected schemaName: string = "public",
   ) {
-    const migrationNames = Object.keys(migrations).map((f) => elements[f].name)
+    const migrationNames = migrations.map((f) => f.name)
     const nameDups = this.findDups(migrationNames)
     if (nameDups.length > 0) {
       throw Error(`Migrations named ${nameDups.join(", ")} are non-unique.`)
@@ -18,7 +18,7 @@ class MigrationRunner {
   public async migrate() {
     await this.checkOrCreateSchema()
     await this.checkOrCreateTable()
-    const unapplied = this.getUnappliedMigrations()
+    const unapplied = await this.getUnappliedMigrations()
     for (const migration of unapplied) {
       await new Promise((resolve, reject) => {
         this.pgp.tx(async (tx) => {
@@ -35,7 +35,7 @@ class MigrationRunner {
     }
   }
 
-  public async revertTo(migrationName) {} // Down migrations
+  // public async revertTo(migrationName) {} // Down migrations
 
   protected async checkOrCreateTable() {
     await this.pgp.none(`
@@ -75,18 +75,37 @@ class MigrationRunner {
     `, [this.schemaName])
   }
 
-  protected registerMigration(pgp: ITask<any>, migrationName: string) {}
+  protected async registerMigration(pgp: ITask<any>, migrationName: string) {
+    await pgp.none(`
+      INSERT INTO $1.$2 (name) VALUE $3;
+    `, [this.schemaName, this.tableName, migrationName])
+  }
 
-  protected async getUnappliedMigrations() {
+  protected async getUnappliedMigrations(): Promise<Migration[]> {
     const migrationHistory = await this.getMigrationHistory()
     await this.validateMigrationHistory(migrationHistory)
     return this.migrations.slice(migrationHistory.length)
   }
 
-  protected getMigrationHistory() {}
+  protected async getMigrationHistory(): Promise<any[]> {
+    return await this.pgp.manyOrNone(`
+      SELECT name FROM $1.$2;
+    `, [this.schemaName, this.tableName])
+  }
 
   protected async validateMigrationHistory(migrationHistory: any[]) {
     // Make sure that the migrations in this.migrations match to the migration history
+    if (migrationHistory.length > this.migrations.length) {
+      // tslint:disable-next-line
+      throw new Error("The migration history is longer than the migrations passed in. Check to make sure migrations have not been deleted.")
+    }
+
+    for (let i = 0; i < migrationHistory.length; i++) {
+      if (migrationHistory[i].name !== this.migrations[i].name) {
+        // tslint:disable-next-line
+        throw new Error("Mismatched migrations. Make sure migrations are in the same order that they have been previously run.")
+      }
+    }
   }
 
   private findDups(arr: any[]) {

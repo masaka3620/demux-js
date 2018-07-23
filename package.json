@@ -33,7 +33,7 @@
     "typescript": "^2.9.2"
   },
   "scripts": {
-    "compile": "tsc",
+    "build": "tsc",
     "watch": "tsc -w",
     "example": "./run-example.sh",
     "lint": "tslint -c tslint.json src/**/*.ts",

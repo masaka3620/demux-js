@@ -9,6 +9,7 @@ export default class Migration {
     protected schema: string,
     protected upSqlPath: string,
     protected downSqlPath: string | null = null,
+    protected migrationFolderPath: string | null = null,
   ) {
     this.upQueryFile = this.loadQueryFile(upSqlPath)
     if (downSqlPath) {
@@ -28,7 +29,12 @@ export default class Migration {
   }
 
   private loadQueryFile(file: string) {
-    const fullPath = path.join(__dirname, file)
+    let fullPath: string
+    if (this.migrationFolderPath) {
+      fullPath = path.join(this.migrationFolderPath, file)
+    } else {
+      fullPath = path.join(__dirname, file)
+    }
     const options = {
       minify: true,
       params: {
