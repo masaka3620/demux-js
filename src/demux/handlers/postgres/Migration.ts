@@ -2,7 +2,7 @@ import * as path from "path"
 import { ITask, QueryFile } from "pg-promise"
 
 export default class Migration {
-  protected upQueryFile: QueryFile
+  public upQueryFile: QueryFile
   protected downQueryFile: QueryFile | null = null
   constructor(
     public name: string,
@@ -18,7 +18,9 @@ export default class Migration {
   }
 
   public async up(pgp: ITask<any>) {
+    console.log("uQF", this.upQueryFile)
     await pgp.none(this.upQueryFile)
+    console.log("SUCCESS!!")
   }
 
   public async down(pgp: ITask<any>) {
@@ -36,7 +38,7 @@ export default class Migration {
       fullPath = path.join(__dirname, file)
     }
     const options = {
-      minify: true,
+      // minify: true,
       params: {
         schema: this.schema,
       },

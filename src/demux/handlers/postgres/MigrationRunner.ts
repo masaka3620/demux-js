@@ -20,17 +20,12 @@ export default class MigrationRunner {
     await this.checkOrCreateTable()
     const unapplied = await this.getUnappliedMigrations()
     for (const migration of unapplied) {
-      await new Promise((resolve, reject) => {
-        this.pgp.tx(async (tx) => {
-          try {
-            await migration.up(tx)
-            await this.registerMigration(tx, migration.name)
-            await tx
-            resolve()
-          } catch (err) {
-            reject()
-          }
-        })
+      await this.pgp.tx(async (tx) => {
+        try {
+          await tx.none(migration.upQueryFile)
+        } catch (err) {
+          console.log("ERROR!!!", err)
+        }
       })
     }
   }
@@ -39,39 +34,16 @@ export default class MigrationRunner {
 
   protected async checkOrCreateTable() {
     await this.pgp.none(`
-      DO $$
-        BEGIN
-          IF NOT EXISTS(
-            SELECT table_name
-              FROM information_schema.tables
-              WHERE schema_name = $1
-              AND table_name = $2
-          )
-          THEN
-            EXECUTE 'CREATE TABLE $1.$2(
-              id serial primary key,
-              name TEXT,
-            )';
-          ENDIF;
-        END
-      $$;
+      CREATE TABLE IF NOT EXISTS $1:raw.$2:raw(
+        id serial PRIMARY KEY,
+        name TEXT
+      );
     `, [this.schemaName, this.tableName])
   }
 
   protected async checkOrCreateSchema() {
     await this.pgp.none(`
-      DO $$
-        BEGIN
-          IF NOT EXISTS(
-            SELECT schema_name
-              FROM information_schema.schemata
-              WHERE schema_name = $1
-          )
-          THEN
-            EXECUTE 'CREATE SCHEMA $1';
-          END IF;
-        END
-      $$;
+      CREATE SCHEMA IF NOT EXISTS $1:raw;
     `, [this.schemaName])
   }
 
@@ -89,7 +61,7 @@ export default class MigrationRunner {
 
   protected async getMigrationHistory(): Promise<any[]> {
     return await this.pgp.manyOrNone(`
-      SELECT name FROM $1.$2;
+      SELECT name FROM $1:raw.$2:raw;
     `, [this.schemaName, this.tableName])
   }
 
