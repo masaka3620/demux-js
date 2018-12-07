@@ -46,4 +46,5 @@ echo "Publish to NPM"
 
 cp .npmrc.template $HOME/.npmrc
 
-npm publish --tag edge
+#npm publish --tag edge
+echo "Not actually publishing, but we would have!"

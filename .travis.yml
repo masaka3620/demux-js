@@ -8,7 +8,7 @@ before_install:
 stages:
   - test
   - name: deploy
-    if: branch = develop
+    if: branch = stages && type = push
 jobs:
   include:
     - stage: test
@@ -26,4 +26,4 @@ jobs:
         script: 
           - ./scripts/publish.sh
         on:
-          branch: develop
+          branch: stages
