@@ -8,7 +8,7 @@ before_install:
 stages:
   - test
   - name: deploy
-    if: branch = stage-testing && type = push
+    if: branch = stage-testing AND type = push
 jobs:
   include:
     - stage: test
