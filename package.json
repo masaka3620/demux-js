@@ -1,5 +1,5 @@
 {
-  "name": "demux",
+  "name": "@blockone/demux",
   "version": "3.1.2",
   "author": {
     "name": "Julien Heller",
@@ -9,7 +9,7 @@
   "description": "Deterministic event-sourced state and side effect handling for blockchain applications",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "repository": "https://github.com/EOSIO/demux-js",
+  "repository": "https://github.com/masaka3620/demux-js",
   "devDependencies": {
     "@types/bunyan": "^1.8.5",
     "@types/jest": "^23.1.4",
