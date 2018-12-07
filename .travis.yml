@@ -8,7 +8,7 @@ before_install:
 stages:
   - test
   - name: deploy
-    if: branch = stage-testing AND type = push
+    if: (NOT type IN (pull_request)) AND branch = stage-testing 
 jobs:
   include:
     - stage: test
